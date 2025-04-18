@@ -174,22 +174,25 @@ impl KWinScript {
     }
 }
 
-impl Drop for KWinScript {
-    fn drop(&mut self) {
-        if self.is_loaded {
-            tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-                .block_on(async {
-                    debug!("Unloading KWin script");
-                    if let Err(e) = self.unload().await {
-                        error!("Problem during stopping KWin script: {e}");
-                    };
-                });
-        }
-    }
-}
+// impl Drop for KWinScript {
+//     fn drop(&mut self) {
+//         if self.is_loaded {
+//           tokio::spawn(async {
+//             self.unload().await;
+//           });
+            // tokio::runtime::Builder::new_current_thread()
+            //     .enable_all()
+            //     .build()
+            //     .unwrap()
+            //     .block_on(async {
+            //         debug!("Unloading KWin script");
+            //         if let Err(e) = self.unload().await {
+            //             error!("Problem during stopping KWin script: {e}");
+            //         };
+            //     });
+//         }
+//     }
+// }
 
 // async fn send_active_window(
 //     client: &ReportClient,
