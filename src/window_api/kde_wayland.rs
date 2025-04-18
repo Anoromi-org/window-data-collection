@@ -191,17 +191,17 @@ impl Drop for KWinScript {
     }
 }
 
-async fn send_active_window(
-    client: &ReportClient,
-    active_window: &Arc<Mutex<ActiveWindow>>,
-) -> anyhow::Result<()> {
-    let active_window = active_window.lock().await;
-
-    client
-        .send_active_window(&active_window.resource_class, &active_window.caption)
-        .await
-        .with_context(|| "Failed to send heartbeat for active window")
-}
+// async fn send_active_window(
+//     client: &ReportClient,
+//     active_window: &Arc<Mutex<ActiveWindow>>,
+// ) -> anyhow::Result<()> {
+//     let active_window = active_window.lock().await;
+//
+//     client
+//         .send_active_window(&active_window.resource_class, &active_window.caption)
+//         .await
+//         .with_context(|| "Failed to send heartbeat for active window")
+// }
 
 struct ActiveWindow {
     resource_class: String,
@@ -304,7 +304,7 @@ impl WindowManager for WindowWatcher {
     fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         let data = self.active_window.blocking_lock();
         Ok(ActiveWindowData {
-            window_title: data.caption.into(),
+            window_title: data.caption.clone().into(),
             process_name: "Unknown".into(),
         })
     }
