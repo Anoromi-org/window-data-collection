@@ -26,7 +26,7 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
     std::env::set_current_dir("/")?;
 
     let (sender, receiver) = mpsc::channel::<RecordEvent>(10);
-    let manager = GenericWindowManager::new()?;
+    let manager = GenericWindowManager::new().await?;
 
     let shutdown_token = CancellationToken::new();
 

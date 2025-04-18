@@ -6,6 +6,8 @@
 pub mod win;
 #[cfg(feature = "x11")]
 pub mod x11;
+#[cfg(feature = "kde_wlnd")]
+pub mod kde_wayland;
 
 #[cfg(feature = "win")]
 extern crate windows;
@@ -41,7 +43,7 @@ pub struct GenericWindowManager {
 }
 
 impl GenericWindowManager {
-    pub fn new() -> Result<Self> {
+    pub async fn new() -> Result<Self> {
         cfg_if::cfg_if! {
             if #[cfg(feature = "win")] {
                 use win::WindowsWindowManager;
@@ -53,6 +55,12 @@ impl GenericWindowManager {
                 use x11::LinuxWindowManager;
                 Ok(Self {
                     inner: Box::new(LinuxWindowManager::new()?),
+                })
+            }
+            else if #[cfg(feature = "kde_wlnd")] {
+                use kde_wayland::WindowWatcher;
+                Ok(Self {
+                    inner: Box::new(WindowWatcher::new().await?),
                 })
             }
             else {
