@@ -39,9 +39,9 @@ impl DataCollectionModule {
         }
     }
 
-    fn collect_data(&mut self) -> Result<RecordEvent> {
-        let window_data = self.producer.get_active_window_data()?;
-        let idle_ms = self.producer.get_idle_time()?;
+    async fn collect_data(&mut self) -> Result<RecordEvent> {
+        let window_data = self.producer.get_active_window_data().await?;
+        let idle_ms = self.producer.get_idle_time().await?;
         let afk = self.afk_evaluator.is_afk(idle_ms);
         let timestamp = self.time_provider.time();
 
@@ -59,7 +59,7 @@ impl DataCollectionModule {
         loop {
             collection_point += self.collection_frequency;
 
-            match self.collect_data() {
+            match self.collect_data().await {
                 Ok(record) => {
                     let span = info_span!("Processing collected data");
                     debug!("Sending message {:?}", record);

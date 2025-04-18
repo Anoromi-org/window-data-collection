@@ -18,6 +18,7 @@ extern crate xcb;
 use std::sync::Arc;
 
 use anyhow::Result;
+use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 pub struct ActiveWindowData {
@@ -30,11 +31,12 @@ pub struct ActiveWindowData {
 
 /// Intended to serve as a contract windows and linux systems must implement.
 #[cfg_attr(test, mockall::automock)]
+#[async_trait]
 pub trait WindowManager {
-    fn get_active_window_data(&mut self) -> Result<ActiveWindowData>;
+    async fn get_active_window_data(&mut self) -> Result<ActiveWindowData>;
 
     /// Retrieve amount of time user has been inactive in milliseconds
-    fn get_idle_time(&mut self) -> Result<u32>;
+    async fn get_idle_time(&mut self) -> Result<u32>;
 }
 
 /// Serves as a cross-compatible WindowManager implementation.
@@ -71,12 +73,13 @@ impl GenericWindowManager {
     }
 }
 
+#[async_trait]
 impl WindowManager for GenericWindowManager {
-    fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
+    async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         self.inner.get_active_window_data()
     }
 
-    fn get_idle_time(&mut self) -> Result<u32> {
+    async fn get_idle_time(&mut self) -> Result<u32> {
         self.inner.get_idle_time()
     }
 }

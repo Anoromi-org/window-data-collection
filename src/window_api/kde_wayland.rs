@@ -303,9 +303,10 @@ impl WindowWatcher {
     }
 }
 
+#[async_trait]
 impl WindowManager for WindowWatcher {
-    fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
-        let data = self.active_window.blocking_lock();
+    async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
+        let data = self.active_window.lock().await;
         Ok(ActiveWindowData {
             window_title: data.caption.clone().into(),
             process_name: "Unknown".into(),
@@ -313,7 +314,7 @@ impl WindowManager for WindowWatcher {
     }
 
     #[doc = " Retrieve amount of time user has been inactive in milliseconds"]
-    fn get_idle_time(&mut self) -> Result<u32> {
+    async fn get_idle_time(&mut self) -> Result<u32> {
         return Ok(0);
     }
 }
