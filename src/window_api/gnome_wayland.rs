@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -11,11 +11,18 @@ pub struct GnomeWindowManager {
     dbus_connection: Connection,
     last_title: String,
     last_app_id: String,
-    last_pid: u64
+    last_pid: u32,
+}
+
+#[derive(Deserialize)]
+struct GnomeWindowDataResponse {
+    wm_class: String,
+    title: String,
+    pid: u32,
 }
 
 impl GnomeWindowManager {
-    async fn get_window_data(&self) -> anyhow::Result<ActiveWindowData> {
+    async fn get_window_data(&self) -> anyhow::Result<GnomeWindowDataResponse> {
         let call_response = self
             .dbus_connection
             .call_method(
@@ -74,12 +81,12 @@ impl GnomeWindowManager {
 }
 
 impl GnomeWindowManager {
-    async fn new() -> anyhow::Result<Self> {
+    pub async fn new() -> anyhow::Result<Self> {
         let watcher = Self {
             dbus_connection: Connection::session().await?,
             last_app_id: String::new(),
             last_title: String::new(),
-            last_pid: 0
+            last_pid: 0,
         };
         watcher.get_window_data().await?;
 
@@ -90,31 +97,36 @@ impl GnomeWindowManager {
 #[async_trait]
 impl WindowManager for GnomeWindowManager {
     async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
-      todo!()
-    //     let data = self.get_window_data().await;
-    //     if let Err(e) = data {
-    //         if e.to_string().contains("Object does not exist at path") {
-    //             trace!("The extension seems to have stopped");
-    //             return Ok(());
-    //         }
-    //         return Err(e);
-    //     }
-    //     let data = data?;
-    //
-    //     if data.wm_class != self.last_app_id || data.title != self.last_title {
-    //         debug!(
-    //             r#"Changed window app_id="{}", title="{}""#,
-    //             data.wm_class, data.title
-    //         );
-    //         self.last_app_id = data.wm_class;
-    //         self.last_title = data.title;
-    //     }
-    //
-    //     client
-    //         .send_active_window(&self.last_app_id, &self.last_title)
-    //         .await
-    //         .with_context(|| "Failed to send heartbeat for active window")
-    // 
+        let data = self.get_window_data().await;
+        if let Err(e) = data {
+            if e.to_string().contains("Object does not exist at path") {
+                trace!("The extension seems to have stopped");
+            }
+            return Err(e);
+        }
+        let data = data?;
+
+        if data.wm_class != self.last_app_id
+            || data.title != self.last_title
+            || data.pid != self.last_pid
+        {
+            debug!(
+                r#"Changed window app_id="{}", title="{}", pid="{}""#,
+                data.wm_class, data.title, data.pid
+            );
+            self.last_app_id = data.wm_class.clone();
+            self.last_title = data.title.clone();
+            self.last_pid = data.pid;
+        }
+
+        let process_name = super::process_name::get(self.last_pid)?
+            .ok_or_else(|| anyhow!("Failed to get process name: process name is None"))?;
+
+        Ok(ActiveWindowData {
+            window_title: data.title.into(),
+            process_name: Some(process_name.into()),
+            app_id: Some(data.wm_class.into()),
+        })
     }
 
     /// Retrieve amount of time user has been inactive in milliseconds
@@ -122,10 +134,3 @@ impl WindowManager for GnomeWindowManager {
         Ok(0)
     }
 }
-
-// #[async_trait]
-// impl Watcher for GnomeWindowManager {
-//     // async fn run_iteration(&mut self, client: &Arc<ReportClient>) -> anyhow::Result<()> {
-//     //     self.send_active_window(client).await
-//     // }
-// }

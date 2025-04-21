@@ -2,6 +2,7 @@
 //! with the server.
 
 use anyhow::{Result, anyhow};
+use async_trait::async_trait;
 use tracing::error;
 use windows::{
     Win32::{
@@ -80,8 +81,9 @@ pub fn get_active() -> Result<ActiveWindowData> {
 
 
     Ok(ActiveWindowData {
-        process_name: process_name.into(),
+        process_name: Some(process_name.into()),
         window_title: title.into(),
+        app_id: None,
     })
 }
 
@@ -137,12 +139,13 @@ impl Default for WindowsWindowManager {
     }
 }
 
+#[async_trait]
 impl WindowManager for WindowsWindowManager {
-    fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
+    async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         get_active().inspect_err(|e| error!("Failed to get active window {e:?}"))
     }
 
-    fn get_idle_time(&mut self) -> Result<u32> {
+    async fn get_idle_time(&mut self) -> Result<u32> {
         get_idle_time().inspect_err(|e| error!("Failed to get idle time {e:?}"))
     }
 }

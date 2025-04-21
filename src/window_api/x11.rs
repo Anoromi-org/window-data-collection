@@ -37,17 +37,6 @@ fn get_pid(conn: &Connection, window: Window, pid_atom: Atom) -> Result<Option<u
     Ok(Some(result_slice[0]))
 }
 
-fn get_process_name(id: u32) -> Result<Option<String>> {
-    let system = sysinfo::System::new_all();
-    let Some(process) = system.process(Pid::from_u32(id)) else {
-        return Ok(None);
-    };
-
-    Ok(process
-        .exe()
-        .and_then(|v| v.to_str())
-        .map(|v| v.to_string()))
-}
 
 fn get_active_window_atom(conn: &Connection) -> Result<Atom> {
     let active_window_atom = conn.wait_for_reply(conn.send_request(&InternAtom {
@@ -112,7 +101,7 @@ impl WindowData {
         let window_name = get_name(&self.connection, active_window, self.window_name_atom)?;
         let process = get_pid(&self.connection, active_window, self.pid_atom)?
             .ok_or_else(|| anyhow!("Failed to get pid: pid is None"))?;
-        let process_name = get_process_name(process)?
+        let process_name = super::process_name::get(process)?
             .ok_or_else(|| anyhow!("Failed to get process name: process name is None"))?;
         Ok(ActiveWindowData {
             window_title: window_name.into(),

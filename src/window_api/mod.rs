@@ -10,6 +10,7 @@ pub mod kde_wayland;
 pub mod win;
 #[cfg(feature = "x11")]
 pub mod x11;
+pub mod process_name;
 
 #[cfg(feature = "win")]
 extern crate windows;
