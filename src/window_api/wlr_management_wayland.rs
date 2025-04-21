@@ -1,10 +1,6 @@
-// use super::wl_connection::WlEventConnection;
-// use super::{wl_connection::subscribe_state, Watcher};
-// use crate::report_client::ReportClient;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::sync::Arc;
 use tracing::{debug, error, trace, warn};
 use wayland_client::{
     event_created_child, globals::GlobalListContents, protocol::wl_registry, Connection, Dispatch,

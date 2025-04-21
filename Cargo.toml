@@ -79,6 +79,7 @@ x11 = ["dep:xcb"]
 kde_wlnd = ["dep:zbus"]
 gnome_wlnd = ["dep:zbus"]
 wlr_wlnd = []
+ext_wlnd = []
 
 [[bin]]
 name = "example"

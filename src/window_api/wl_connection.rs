@@ -5,11 +5,13 @@ use wayland_client::{
     Connection, Dispatch, EventQueue, Proxy, QueueHandle,
 };
 
-use wayland_protocols::ext::idle_notify::v1::client::{
-    ext_idle_notification_v1::ExtIdleNotificationV1, ext_idle_notifier_v1::ExtIdleNotifierV1,
+use wayland_protocols::ext::{
+    foreign_toplevel_list::v1::client::ext_foreign_toplevel_list_v1::ExtForeignToplevelListV1,
+    idle_notify::v1::client::{
+        ext_idle_notification_v1::ExtIdleNotificationV1, ext_idle_notifier_v1::ExtIdleNotifierV1,
+    },
 };
 use wayland_protocols_wlr::foreign_toplevel::v1::client::zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1;
-
 
 pub struct WlEventConnection<T> {
     pub globals: GlobalList,
@@ -48,6 +50,19 @@ where
             .bind::<ZwlrForeignToplevelManagerV1, T, ()>(
                 &self.queue_handle,
                 1..=ZwlrForeignToplevelManagerV1::interface().version,
+                (),
+            )
+            .map_err(std::convert::Into::into)
+    }
+
+    pub fn get_foreign_toplevel_list(&self) -> anyhow::Result<ExtForeignToplevelListV1>
+    where
+        T: Dispatch<ExtForeignToplevelListV1, ()>,
+    {
+        self.globals
+            .bind::<ExtForeignToplevelListV1, T, ()>(
+                &self.queue_handle,
+                1..=ExtForeignToplevelListV1::interface().version,
                 (),
             )
             .map_err(std::convert::Into::into)

@@ -2,19 +2,21 @@
 //! [GenericWindowManager] is the main artifact of this module that abstracts
 //! the operations.
 
+#[cfg(feature = "ext_wlnd")]
+pub mod ext_list_wayland;
 #[cfg(feature = "gnome_wlnd")]
 pub mod gnome_wayland;
 #[cfg(feature = "kde_wlnd")]
 pub mod kde_wayland;
-#[cfg(feature = "wlr_wlnd")]
-pub mod wl_connection;
-#[cfg(feature = "wlr_wlnd")]
-pub mod wrl_wayland;
+pub mod process_name;
 #[cfg(feature = "win")]
 pub mod win;
+#[cfg(any(feature = "wlr_wlnd", feature = "ext_wlnd"))]
+pub mod wl_connection;
+#[cfg(feature = "wlr_wlnd")]
+pub mod wlr_management_wayland;
 #[cfg(feature = "x11")]
 pub mod x11;
-pub mod process_name;
 
 #[cfg(feature = "win")]
 extern crate windows;
@@ -71,21 +73,28 @@ impl GenericWindowManager {
             else if #[cfg(feature = "kde_wlnd")] {
                 use kde_wayland::WindowWatcher;
                 Ok(Self {
-                    inner: Box::new(GnomeWindowManager::new().await?),
+                    inner: Box::new(WindowWatcher::new().await?),
                 })
             }
             else if #[cfg(feature = "gnome_wlnd")] {
                 use gnome_wayland::GnomeWindowManager;
-                
+
                 Ok(Self {
                     inner: Box::new(GnomeWindowManager::new().await?),
                 })
             }
             else if #[cfg(feature = "wlr_wlnd")] {
-                use wrl_wayland::WlrWindowManager;
+                use wlr_management_wayland::WlrWindowManager;
 
                 Ok(Self {
-                    inner: Box::new(WlrWindowManager::new().await?),
+                    inner: Box::new(ExtWindowManager::new().await?),
+                })
+            }
+            else if #[cfg(feature = "ext_wlnd")] {
+                use ext_list_wayland::ExtWindowManager;
+
+                Ok(Self {
+                    inner: Box::new(ExtWindowManager::new().await?),
                 })
             }
             else {
