@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use serde::Deserialize;
-use std::sync::Arc;
 use tracing::{debug, trace};
 use zbus::Connection;
 
@@ -15,14 +14,30 @@ pub struct GnomeWindowManager {
 }
 
 #[derive(Deserialize)]
-struct GnomeWindowDataResponse {
+struct GnomeWindowData {
     wm_class: String,
     title: String,
     pid: u32,
 }
 
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum EmptyOptional<T> {
+    Optional(T),
+    Empty {},
+}
+
+impl<T> From<EmptyOptional<T>> for Option<T> {
+    fn from(value: EmptyOptional<T>) -> Self {
+        match value {
+            EmptyOptional::Optional(t) => Some(t),
+            EmptyOptional::Empty {} => None,
+        }
+    }
+}
+
 impl GnomeWindowManager {
-    async fn get_window_data(&self) -> anyhow::Result<GnomeWindowDataResponse> {
+    async fn get_window_data(&self) -> anyhow::Result<Option<GnomeWindowData>> {
         let call_response = self
             .dbus_connection
             .call_method(
@@ -40,9 +55,10 @@ impl GnomeWindowManager {
                     .body()
                     .deserialize()
                     .with_context(|| "DBus interface cannot be parsed as string")?;
-                serde_json::from_str(&json).with_context(|| {
+                let data : EmptyOptional<GnomeWindowData> = serde_json::from_str(&json).with_context(|| {
                     format!("DBus interface org.gnome.shell.extensions.FocusedWindow returned wrong JSON: {json}")
-                })
+                })?;
+                Ok(data.into())
             }
             Err(e) => {
                 if e.to_string().contains("No window in focus") {
@@ -104,7 +120,9 @@ impl WindowManager for GnomeWindowManager {
             }
             return Err(e);
         }
-        let data = data?;
+        let Some(data) = data? else {
+            return Err(anyhow!("No window is active"));
+        };
 
         if data.wm_class != self.last_app_id
             || data.title != self.last_title

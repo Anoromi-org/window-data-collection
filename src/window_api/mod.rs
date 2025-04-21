@@ -6,6 +6,10 @@
 pub mod gnome_wayland;
 #[cfg(feature = "kde_wlnd")]
 pub mod kde_wayland;
+#[cfg(feature = "wlr_wlnd")]
+pub mod wl_connection;
+#[cfg(feature = "wlr_wlnd")]
+pub mod wrl_wayland;
 #[cfg(feature = "win")]
 pub mod win;
 #[cfg(feature = "x11")]
@@ -75,6 +79,13 @@ impl GenericWindowManager {
                 
                 Ok(Self {
                     inner: Box::new(GnomeWindowManager::new().await?),
+                })
+            }
+            else if #[cfg(feature = "wlr_wlnd")] {
+                use wrl_wayland::WlrWindowManager;
+
+                Ok(Self {
+                    inner: Box::new(WlrWindowManager::new().await?),
                 })
             }
             else {

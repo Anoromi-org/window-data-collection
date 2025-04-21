@@ -13,6 +13,6 @@ async fn main() -> Result<()> {
         println!("Window data {:?}", manager.get_active_window_data().await);
         println!("Idle time{:?}", manager.get_idle_time().await);
         println!();
-        sleep(Duration::from_secs(1));
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }

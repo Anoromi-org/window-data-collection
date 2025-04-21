@@ -64,6 +64,11 @@ features = [
 ]
 optional = true
 
+[target.'cfg(target_os = "linux")'.dependencies]
+wayland-client = "0.31.8"
+wayland-protocols = { version = "0.32.6", features = ["client", "staging"] }
+wayland-protocols-wlr = { version = "0.3.6", features = ["client"] }
+
 [dev-dependencies]
 mockall = "0.13.1"
 tempfile = "3.17.1"
@@ -73,6 +78,7 @@ win = ["dep:windows"]
 x11 = ["dep:xcb"]
 kde_wlnd = ["dep:zbus"]
 gnome_wlnd = ["dep:zbus"]
+wlr_wlnd = []
 
 [[bin]]
 name = "example"
