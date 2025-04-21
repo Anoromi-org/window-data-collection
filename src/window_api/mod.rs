@@ -2,12 +2,14 @@
 //! [GenericWindowManager] is the main artifact of this module that abstracts
 //! the operations.
 
+#[cfg(feature = "gnome_wlnd")]
+pub mod gnome_wayland;
+#[cfg(feature = "kde_wlnd")]
+pub mod kde_wayland;
 #[cfg(feature = "win")]
 pub mod win;
 #[cfg(feature = "x11")]
 pub mod x11;
-#[cfg(feature = "kde_wlnd")]
-pub mod kde_wayland;
 
 #[cfg(feature = "win")]
 extern crate windows;
@@ -19,14 +21,16 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActiveWindowData {
-    /// Name of the window. For example 'bash in hello' or 'Document 1' or 'Vibing in YouTube -
-    /// Chrome'
+    /// Name of the window. For example, 'bash in hello' or 'Document 1' or '*Video* in YouTube - Chrome'
     pub window_title: Arc<str>,
-    /// Full path to an executable. For example /home/etc/nvim
-    pub process_name: Arc<str>,
+    /// Full path to an executable. For example, /home/etc/nvim
+    pub process_name: Option<Arc<str>>,
+    /// App id of the application. For example, firefox
+    pub app_id: Option<Arc<str>>,
 }
 
 /// Intended to serve as a contract windows and linux systems must implement.
@@ -62,7 +66,14 @@ impl GenericWindowManager {
             else if #[cfg(feature = "kde_wlnd")] {
                 use kde_wayland::WindowWatcher;
                 Ok(Self {
-                    inner: Box::new(WindowWatcher::new().await?),
+                    inner: Box::new(GnomeWindowManager::new().await?),
+                })
+            }
+            else if #[cfg(feature = "gnome_wlnd")] {
+                use gnome_wayland::GnomeWindowManager;
+                
+                Ok(Self {
+                    inner: Box::new(GnomeWindowManager::new().await?),
                 })
             }
             else {

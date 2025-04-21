@@ -1,15 +1,14 @@
 //! Contains logic for extracting records through x11. The implementation uses xcb for communication
 //! with the server.
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use sysinfo::Pid;
 use tracing::{error, instrument};
 use xcb::{
-    Connection,
     screensaver::{QueryInfo, QueryInfoReply},
-    x::{
-        self, ATOM_ANY, Atom, Drawable, GetProperty, InternAtom, Window,
-    },
+    x::{self, Atom, Drawable, GetProperty, InternAtom, Window, ATOM_ANY},
+    Connection,
 };
 
 use super::{ActiveWindowData, WindowManager};
@@ -106,20 +105,19 @@ impl WindowData {
         let setup = self.connection.get_setup();
 
         // Currently the application only supports 1 x11 screen.
-        let default_window = setup
-            .roots()
-            .nth(self.preferred_screen)
-            .unwrap()
-            .root();
+        let default_window = setup.roots().nth(self.preferred_screen).unwrap().root();
 
         let active_window =
             get_active_window(&self.connection, &default_window, self.active_window_atom)?;
         let window_name = get_name(&self.connection, active_window, self.window_name_atom)?;
-        let process = get_pid(&self.connection, active_window, self.pid_atom)?.ok_or_else(|| anyhow!("Failed to get pid: pid is None"))?;
-        let process_name = get_process_name(process)?.ok_or_else(|| anyhow!("Failed to get process name: process name is None"))?;
+        let process = get_pid(&self.connection, active_window, self.pid_atom)?
+            .ok_or_else(|| anyhow!("Failed to get pid: pid is None"))?;
+        let process_name = get_process_name(process)?
+            .ok_or_else(|| anyhow!("Failed to get process name: process name is None"))?;
         Ok(ActiveWindowData {
             window_title: window_name.into(),
-            process_name: process_name.into(),
+            process_name: Some(process_name.into()),
+            app_id: None,
         })
     }
 }
@@ -146,8 +144,10 @@ impl LinuxWindowManager {
             .inspect_err(|e| error!("Failed getting active window atom {e:?}"))?;
         let name_atom = get_net_wm_name_atom(&connection)
             .inspect_err(|e| error!("Failed getting wm name atom {e:?}"))?;
-        let pid_atom =
-            get_pid_atom(&connection).inspect_err(|e| error!("Failed getting pid of an atom {e:?}"))?;
+        let pid_atom = get_pid_atom(&connection)
+            .inspect_err(|e| error!("Failed getting pid of an atom {e:?}"))?;
+
+        
         Ok(WindowData {
             connection,
             preferred_screen,
@@ -175,9 +175,10 @@ impl LinuxWindowManager {
     }
 }
 
+#[async_trait]
 impl WindowManager for LinuxWindowManager {
     #[instrument(skip(self))]
-    fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
+    async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         let data = self
             .try_get_data()
             .inspect_err(|e| error!("Failed getting connection {e:?}"))?;
@@ -187,7 +188,7 @@ impl WindowManager for LinuxWindowManager {
     }
 
     #[instrument(skip(self))]
-    fn get_idle_time(&mut self) -> Result<u32> {
+    async fn get_idle_time(&mut self) -> Result<u32> {
         let data = self
             .try_get_data()
             .inspect_err(|e| error!("Failed getting connection {e:?}"))?;

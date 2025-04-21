@@ -309,7 +309,8 @@ impl WindowManager for WindowWatcher {
         let data = self.active_window.lock().await;
         Ok(ActiveWindowData {
             window_title: data.caption.clone().into(),
-            process_name: "Unknown".into(),
+            process_name: None,
+            app_id: None
         })
     }
 

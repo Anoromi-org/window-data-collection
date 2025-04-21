@@ -3,8 +3,6 @@
 //! easily used through a terminal.
 //!
 
-pub mod cli;
-pub mod daemon;
 pub mod fs;
 pub mod utils;
 pub mod window_api;
