@@ -4,7 +4,7 @@
 use std::{path::Path, thread::sleep, time::Duration};
 
 use anyhow::Result;
-use tracing::{error, level_filters::LevelFilter};
+use tracing::{error, info, level_filters::LevelFilter};
 use whatawhat::{utils::logging::enable_logging, window_api::{GenericWindowManager, WindowManager}};
 
 #[tokio::main]
@@ -12,8 +12,8 @@ async fn main() -> Result<()> {
     enable_logging("example", "logs".as_ref(), Some(LevelFilter::TRACE), true)?;
     let mut manager = GenericWindowManager::new().await.inspect_err(|e| error!("Failed to create window manager {e:?}"))?;
     loop {
-        println!("Window data {:?}", manager.get_active_window_data().await);
-        println!("Idle time{:?}", manager.get_idle_time().await);
+        info!("Window data {:?}", manager.get_active_window_data().await);
+        info!("Idle time{:?}", manager.get_idle_time().await);
         println!();
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
