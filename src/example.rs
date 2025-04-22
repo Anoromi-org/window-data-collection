@@ -12,6 +12,7 @@ async fn main() -> Result<()> {
     enable_logging("example", "logs".as_ref(), Some(LevelFilter::TRACE), true)?;
     let mut manager = GenericWindowManager::new().await.inspect_err(|e| error!("Failed to create window manager {e:?}"))?;
     loop {
+        println!("Window data {:?}", manager.get_active_window_data().await);
         info!("Window data {:?}", manager.get_active_window_data().await);
         info!("Idle time{:?}", manager.get_idle_time().await);
         tokio::time::sleep(Duration::from_secs(1)).await;
