@@ -17,6 +17,7 @@ pub mod wl_connection;
 pub mod wlr_management_wayland;
 #[cfg(feature = "x11")]
 pub mod x11;
+pub mod test;
 
 #[cfg(feature = "win")]
 extern crate windows;
