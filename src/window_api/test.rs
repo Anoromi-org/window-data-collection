@@ -346,6 +346,7 @@ mod generated {
         }
         #[inline]
         fn from_id(conn: &Connection, id: ObjectId) -> Result<Self, InvalidId> {
+          dbg!(id.interface(), Self::interface(), !id.is_null());
           if !same_interface(id.interface(), Self::interface()) && !id.is_null() {
             return Err(InvalidId);
           }
