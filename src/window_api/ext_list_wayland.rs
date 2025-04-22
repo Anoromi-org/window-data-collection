@@ -106,6 +106,7 @@ impl Dispatch<ExtForeignToplevelHandleV1, ()> for ToplevelState {
   ) {
     let id = handle.id().to_string();
     let window = toplevel_state.windows.get_mut(&id);
+    trace!("Something did happen with id {id} but we didn't record it");
     if let Some(window) = window {
       match event {
         HandleEvent::Title { title } => {

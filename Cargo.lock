@@ -1931,6 +1931,7 @@ dependencies = [
  "wayland-client",
  "wayland-protocols",
  "wayland-protocols-wlr",
+ "wayland-scanner",
  "windows 0.58.0",
  "xcb",
  "zbus",
