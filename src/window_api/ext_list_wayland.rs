@@ -153,8 +153,7 @@ impl ExtWindowManager {
 
         connection
             .event_queue
-            .roundtrip(&mut toplevel_state)
-            .unwrap();
+            .roundtrip(&mut toplevel_state)?;
 
         Ok(Self {
             connection,
