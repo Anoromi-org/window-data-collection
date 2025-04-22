@@ -124,7 +124,9 @@ impl Dispatch<ExtForeignToplevelHandleV1, ()> for ToplevelState {
           //     toplevel_state.current_window_id = Some(id);
           // }
         }
-        HandleEvent::Done => trace!("Done: {id}"),
+        HandleEvent::Done => {
+            //trace!("Done: {id}")
+        },
         HandleEvent::Closed => {
           trace!("Window is closed: {id}");
           if toplevel_state.windows.remove(&id).is_none() {
