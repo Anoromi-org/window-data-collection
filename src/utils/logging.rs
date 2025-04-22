@@ -34,6 +34,7 @@ pub fn enable_logging(
         .map(|v| v.to_string())
         .unwrap_or_else(|| std::env::var("RUST_LOG").unwrap_or_else(|_| "debug".into()));
 
+    println!("{}", env!("CARGO_PKG_NAME").replace("-", "_"));
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::new(format!(
             "{}={level}",
