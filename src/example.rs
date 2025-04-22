@@ -14,7 +14,6 @@ async fn main() -> Result<()> {
     loop {
         info!("Window data {:?}", manager.get_active_window_data().await);
         info!("Idle time{:?}", manager.get_idle_time().await);
-        println!();
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }
