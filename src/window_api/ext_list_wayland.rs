@@ -1,6 +1,7 @@
 use super::wl_connection::WlEventConnection;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use wayland_client::backend::ObjectId;
 use std::collections::HashMap;
 use tracing::{debug, error, trace, warn};
 use wayland_client::{
@@ -47,6 +48,7 @@ impl Dispatch<ExtForeignToplevelListV1, ()> for ToplevelState {
         match event {
             ListEvent::Toplevel { toplevel } => {
                 debug!("Toplevel handle is received {}", toplevel.id());
+                let b : ObjectId = toplevel.id();
                 state.windows.insert(
                     toplevel.id().to_string(),
                     WindowData {
@@ -146,6 +148,8 @@ impl ExtWindowManager {
         connection.get_foreign_toplevel_list()?; 
                     
         let mut toplevel_state = ToplevelState::new();
+
+        debug!("Trying to receive events");
 
         connection
             .event_queue
