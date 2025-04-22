@@ -67,7 +67,7 @@ impl Dispatch<ExtForeignToplevelListV1, ()> for ToplevelState {
   }
 
   event_created_child!(ToplevelState, ExtForeignToplevelListV1, [
-      EVT_TOPLEVEL_OPCODE => (ExtForeignToplevelListV1, ()),
+      EVT_TOPLEVEL_OPCODE => (ExtForeignToplevelHandleV1, ()),
   ]);
 }
 
