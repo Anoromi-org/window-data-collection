@@ -11,8 +11,8 @@ use whatawhat::{utils::logging::enable_logging, window_api::{GenericWindowManage
 async fn main() -> Result<()> {
     enable_logging("example", "logs".as_ref(), Some(LevelFilter::TRACE), true)?;
     let mut manager = GenericWindowManager::new().await.inspect_err(|e| error!("Failed to create window manager {e:?}"))?;
+    info!("Created manager");
     loop {
-      
         println!("Window data {:?}", manager.get_active_window_data().await);
         error!("Window data {:?}", manager.get_active_window_data().await);
         error!("Idle time{:?}", manager.get_idle_time().await);
