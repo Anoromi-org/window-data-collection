@@ -29,6 +29,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActiveWindowData {
@@ -87,7 +88,7 @@ impl GenericWindowManager {
                 use wlr_management_wayland::WlrWindowManager;
 
                 Ok(Self {
-                    inner: Box::new(WlrWindowManager::new().await?),
+                    inner: Box::new(WlrWindowManager::new().await.inspect_err(|e| error!("Failed to create wlr window manager: {e:?}"))?),
                 })
             }
             else if #[cfg(feature = "ext_wlnd")] {
