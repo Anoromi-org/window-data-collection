@@ -143,8 +143,8 @@ pub struct ExtWindowManager {
 impl ExtWindowManager {
     pub async fn new() -> anyhow::Result<Self> {
         let mut connection: WlEventConnection<ToplevelState> = WlEventConnection::connect()?;
-        connection.get_foreign_toplevel_list()?;
-
+        connection.get_foreign_toplevel_list()?; 
+                    
         let mut toplevel_state = ToplevelState::new();
 
         connection

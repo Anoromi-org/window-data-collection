@@ -87,7 +87,7 @@ impl GenericWindowManager {
                 use wlr_management_wayland::WlrWindowManager;
 
                 Ok(Self {
-                    inner: Box::new(ExtWindowManager::new().await?),
+                    inner: Box::new(WlrWindowManager::new().await?),
                 })
             }
             else if #[cfg(feature = "ext_wlnd")] {
