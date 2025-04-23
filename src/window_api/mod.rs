@@ -98,7 +98,10 @@ impl GenericActiveWindowManager {
     #[cfg(feature = "macos")]
     {
       use macos::MacosManger;
-      let _ = try_create_manager!(MacosManger::new()).inspect_err(|e| tracing::error!("Failed creating X11 manager {e:?}"));
+      return Ok(Self {
+        inner: Box::new(MacosManger::new()),
+      });
+      // let _ = try_create_manager!(MacosManger::new()).inspect_err(|e| tracing::error!("Failed creating X11 manager {e:?}"));
     }
     #[cfg(feature = "x11")]
     {
