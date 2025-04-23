@@ -1,24 +1,18 @@
-use super::{
-  test::client::ext_foreign_toplevel_list_v1::{ExtForeignToplevelListV1, Event as ListEvent, EVT_TOPLEVEL_OPCODE},
-  test::client::ext_foreign_toplevel_handle_v1::{ExtForeignToplevelHandleV1, Event as HandleEvent},
-  wl_connection::WlEventConnection,
+use wayland_protocols::ext::foreign_toplevel_list::v1::client::{
+  ext_foreign_toplevel_list_v1::{ExtForeignToplevelListV1, Event as ListEvent, EVT_TOPLEVEL_OPCODE},
+  ext_foreign_toplevel_handle_v1::{ExtForeignToplevelHandleV1, Event as HandleEvent},
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use wayland_client::backend::ObjectId;
 use std::collections::HashMap;
 use tracing::{debug, error, trace, warn};
 use wayland_client::{
   event_created_child, globals::GlobalListContents, protocol::wl_registry, Connection, Dispatch, Proxy, QueueHandle,
 };
-// use wayland_protocols::ext::foreign_toplevel_list::v1::client::ext_foreign_toplevel_handle_v1::{
-//     Event as HandleEvent, ExtForeignToplevelHandleV1,
-// };
-// use wayland_protocols::ext::foreign_toplevel_list::v1::client::ext_foreign_toplevel_list_v1::{
-//     Event as ListEvent, ExtForeignToplevelListV1, EVT_TOPLEVEL_OPCODE,
-// };
 
-use super::{ActiveWindowData, WindowManager};
+use crate::window_api::wl_connection::WlEventConnection;
+
+use super::{ActiveWindowData, ActiveWindowManager, WindowManager};
 
 struct WindowData {
   app_id: String,
@@ -132,8 +126,8 @@ impl Dispatch<ExtForeignToplevelHandleV1, ()> for ToplevelState {
           if toplevel_state.windows.remove(&id).is_none() {
             warn!("Window is already removed: {id}");
           }
-        }
-        _ => (),
+        },
+        _ => ()
       };
     } else {
       trace!("Something did happen with id {id} but we didn't record it");
@@ -166,7 +160,7 @@ impl ExtWindowManager {
 }
 
 #[async_trait]
-impl WindowManager for ExtWindowManager {
+impl ActiveWindowManager for ExtWindowManager {
   async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
     self
       .connection
@@ -192,8 +186,4 @@ impl WindowManager for ExtWindowManager {
     })
   }
 
-  /// Retrieve amount of time user has been inactive in milliseconds
-  async fn get_idle_time(&mut self) -> Result<u32> {
-    Ok(0)
-  }
 }

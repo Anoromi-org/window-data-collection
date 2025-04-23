@@ -4,7 +4,7 @@ use serde::Deserialize;
 use tracing::{debug, trace};
 use zbus::Connection;
 
-use super::{ActiveWindowData, WindowManager};
+use super::{ActiveWindowData, ActiveWindowManager, WindowManager};
 
 pub struct GnomeWindowManager {
     dbus_connection: Connection,
@@ -68,32 +68,6 @@ impl GnomeWindowManager {
             }
         }
     }
-
-    // async fn send_active_window(&mut self, client: &ReportClient) -> anyhow::Result<()> {
-    //     let data = self.get_window_data().await;
-    //     if let Err(e) = data {
-    //         if e.to_string().contains("Object does not exist at path") {
-    //             trace!("The extension seems to have stopped");
-    //             return Ok(());
-    //         }
-    //         return Err(e);
-    //     }
-    //     let data = data?;
-    //
-    //     if data.wm_class != self.last_app_id || data.title != self.last_title {
-    //         debug!(
-    //             r#"Changed window app_id="{}", title="{}""#,
-    //             data.wm_class, data.title
-    //         );
-    //         self.last_app_id = data.wm_class;
-    //         self.last_title = data.title;
-    //     }
-    //
-    //     client
-    //         .send_active_window(&self.last_app_id, &self.last_title)
-    //         .await
-    //         .with_context(|| "Failed to send heartbeat for active window")
-    // }
 }
 
 impl GnomeWindowManager {
@@ -111,7 +85,7 @@ impl GnomeWindowManager {
 }
 
 #[async_trait]
-impl WindowManager for GnomeWindowManager {
+impl ActiveWindowManager for GnomeWindowManager {
     async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         let data = self.get_window_data().await;
         if let Err(e) = data {
@@ -145,10 +119,5 @@ impl WindowManager for GnomeWindowManager {
             process_name: Some(process_name.into()),
             app_id: Some(data.wm_class.into()),
         })
-    }
-
-    /// Retrieve amount of time user has been inactive in milliseconds
-    async fn get_idle_time(&mut self) -> Result<u32> {
-        Ok(0)
     }
 }

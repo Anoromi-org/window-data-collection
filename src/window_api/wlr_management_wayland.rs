@@ -14,7 +14,7 @@ use wayland_protocols_wlr::foreign_toplevel::v1::client::zwlr_foreign_toplevel_m
 };
 
 use super::wl_connection::WlEventConnection;
-use super::{ActiveWindowData, WindowManager};
+use super::{ActiveWindowData, ActiveWindowManager, WindowManager};
 
 struct WindowData {
     app_id: String,
@@ -159,7 +159,7 @@ impl WlrWindowManager {
 }
 
 #[async_trait]
-impl WindowManager for WlrWindowManager {
+impl ActiveWindowManager for WlrWindowManager {
     async fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         self.connection
             .event_queue
@@ -184,10 +184,5 @@ impl WindowManager for WlrWindowManager {
             process_name: None,
             app_id: Some(active_window.app_id.clone().into()),
         })
-    }
-
-    /// Retrieve amount of time user has been inactive in milliseconds
-    async fn get_idle_time(&mut self) -> Result<u32> {
-        Ok(0)
     }
 }

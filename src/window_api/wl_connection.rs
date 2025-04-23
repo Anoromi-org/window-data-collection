@@ -4,25 +4,8 @@ use wayland_client::{
     protocol::{wl_registry, wl_seat::WlSeat},
     Connection, Dispatch, EventQueue, Proxy, QueueHandle,
 };
+use wayland_protocols::ext::foreign_toplevel_list::v1::client::ext_foreign_toplevel_list_v1::ExtForeignToplevelListV1;
 use wayland_protocols_wlr::foreign_toplevel::v1::client::zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1;
-
-use super::test::client::ext_foreign_toplevel_list_v1::ExtForeignToplevelListV1;
-
-// use wayland_protocols::ext::{
-//     foreign_toplevel_list::v1::client::ext_foreign_toplevel_list_v1::ExtForeignToplevelListV1,
-//     idle_notify::v1::client::{
-//         ext_idle_notification_v1::ExtIdleNotificationV1, ext_idle_notifier_v1::ExtIdleNotifierV1,
-//     },
-// };
-
-// use super::test::client::ext_foreign_toplevel_list_v1::{
-//   
-//     foreign_toplevel_list::v1::client::ext_foreign_toplevel_list_v1::ExtForeignToplevelListV1,
-//     idle_notify::v1::client::{
-//         ext_idle_notification_v1::ExtIdleNotificationV1, ext_idle_notifier_v1::ExtIdleNotifierV1,
-//     },
-// };
-// use wayland_protocols_wlr::foreign_toplevel::v1::client::zwlr_foreign_toplevel_manager_v1::ZwlrForeignToplevelManagerV1;
 
 pub struct WlEventConnection<T> {
     pub globals: GlobalList,
