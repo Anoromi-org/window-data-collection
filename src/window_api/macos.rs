@@ -41,7 +41,8 @@ impl ActiveWindowManager for MacosManger {
       let help = NSAppleScript::initWithSource(hello, ns_string!(SOURCE)).expect("TODO");
       let mut err: Option<Retained<NSDictionary<NSString, AnyObject>>> = None;
       let descriptor = help.executeAndReturnError(Some(&mut err));
-      dbg!(descriptor);
+      dbg!(descriptor.stringValue());
+      println!("{}", descriptor.stringValue().unwrap());
 
     }
 
