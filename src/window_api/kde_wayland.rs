@@ -4,15 +4,14 @@
  * Inspired by https://github.com/k0kubun/xremap/
  */
 use anyhow::{ anyhow, Context, Result };
-use async_trait::async_trait;
 use std::env::{ self, temp_dir };
 use std::path::Path;
+use std::sync::Mutex;
 use std::sync::{ mpsc::channel, Arc };
 use std::thread;
-use tokio::sync::Mutex;
 use tracing::{ debug, error };
 use zbus::interface;
-use zbus::{ conn::Builder as ConnectionBuilder, Connection };
+use zbus::blocking::{ connection::Builder as ConnectionBuilder, Connection };
 
 use super::{ ActiveWindowData, ActiveWindowManager };
 
@@ -36,20 +35,20 @@ impl KWinScript
     }
   }
 
-  async fn load( &mut self ) -> anyhow::Result< () >
+   fn load( &mut self ) -> anyhow::Result< () >
   {
     let path = temp_dir().join( "kwin_window.js" );
     std::fs::write( &path, KWIN_SCRIPT ).unwrap();
 
-    let number = self.get_registered_number( &path ).await?;
-    let result = self.start( number ).await;
+    let number = self.get_registered_number( &path )?;
+    let result = self.start( number );
     std::fs::remove_file( &path )?;
     self.is_loaded = true;
 
     result
   }
 
-  async fn is_loaded( &self ) -> anyhow::Result< bool >
+   fn is_loaded( &self ) -> anyhow::Result< bool >
   {
     self
     .dbus_connection
@@ -61,13 +60,13 @@ impl KWinScript
       "isScriptLoaded",
       &KWIN_SCRIPT_NAME,
     )
-    .await?
+    ?
     .body()
     .deserialize()
     .map_err( std::convert::Into::into )
   }
 
-  async fn unload_kwin( connection : &Connection ) -> Result< bool >
+   fn unload_kwin( connection : &Connection ) -> Result< bool >
   {
     connection
     .call_method
@@ -78,13 +77,13 @@ impl KWinScript
       "unloadScript",
       &KWIN_SCRIPT_NAME,
     )
-    .await?
+    ?
     .body()
     .deserialize()
     .map_err( std::convert::Into::into )
   }
 
-  async fn get_registered_number( &self, path : &Path ) -> anyhow::Result< i32 >
+   fn get_registered_number( &self, path : &Path ) -> anyhow::Result< i32 >
   {
     let temp_path = path.to_str().ok_or( anyhow!( "Temporary file path is not valid" ) )?;
 
@@ -99,19 +98,19 @@ impl KWinScript
       // since OsStr does not implement zvariant::Type, the temp-path must be valid utf-8
       &( temp_path, KWIN_SCRIPT_NAME ),
     )
-    .await?
+    ?
     .body()
     .deserialize()
     .map_err( std::convert::Into::into )
   }
 
-  async fn unload( &self ) -> anyhow::Result< bool > { Self::unload_kwin( &self.dbus_connection ).await }
+   fn unload( &self ) -> anyhow::Result< bool > { Self::unload_kwin( &self.dbus_connection ) }
 
-  async fn start( &self, script_number : i32 ) -> anyhow::Result< () >
+   fn start( &self, script_number : i32 ) -> anyhow::Result< () >
   {
     debug!( "Starting KWin script {script_number}" );
 
-    let path = if self.get_major_version().await < 6
+    let path = if self.get_major_version() < 6
     {
       format!( "/{script_number}" )
     }
@@ -122,12 +121,12 @@ impl KWinScript
     self
       .dbus_connection
       .call_method( Some( "org.kde.KWin" ), path, Some( "org.kde.kwin.Script" ), "run", &() )
-      .await
+      
       .with_context( || "Error on starting the script" )?;
     Ok( () )
   }
 
-  async fn get_major_version( &self ) -> i8
+   fn get_major_version( &self ) -> i8
   {
     if let Ok( version ) = Self::get_major_version_from_env()
     {
@@ -139,7 +138,7 @@ impl KWinScript
     {
       self
       .get_major_version_from_dbus()
-      .await
+      
       .unwrap_or_else
       ( 
         | e | 
@@ -158,7 +157,7 @@ impl KWinScript
     .map_err( std::convert::Into::into )
   }
 
-  async fn get_major_version_from_dbus( &self ) -> anyhow::Result< i8 >
+   fn get_major_version_from_dbus( &self ) -> anyhow::Result< i8 >
   {
     let support_information : String = self
     .dbus_connection
@@ -170,7 +169,7 @@ impl KWinScript
       "supportInformation",
       &(),
     )
-    .await?
+    ?
     .body()
     .deserialize()?;
 
@@ -203,13 +202,8 @@ impl Drop for KWinScript
     if self.is_loaded
     {
       let connection = self.dbus_connection.clone();
-      tokio::spawn( 
-        async move {
-          let _ = Self::unload_kwin( &connection )
-          .await
-          .inspect_err( | e | error!( "Failed to unload KWin script: {e}" ) );
-        } 
-      );
+      let _ = Self::unload_kwin( &connection )
+      .inspect_err( | e | error!( "Failed to unload KWin script: {e}" ) );
     }
   }
 }
@@ -229,10 +223,10 @@ struct ActiveWindowInterface
 #[ interface( name = "systems.obox.window_data_collection" ) ]
 impl ActiveWindowInterface
 {
-  async fn notify_active_window( &mut self, caption : String, resource_class : String, resource_name : String )
+   fn notify_active_window( &mut self, caption : String, resource_class : String, resource_name : String )
   {
     debug!( "Active window class: \"{resource_class}\", name: \"{resource_name}\", caption: \"{caption}\"" );
-    let mut active_window = self.active_window.lock().await;
+    let mut active_window = self.active_window.lock().unwrap();
     active_window.caption = caption;
     active_window.resource_class = resource_class;
     active_window.resource_name = resource_name;
@@ -248,20 +242,20 @@ pub struct KdeWindowManager
 
 impl KdeWindowManager
 {
-  pub async fn new() -> anyhow::Result< Self >
+  pub  fn new() -> anyhow::Result< Self >
   {
-    let mut kwin_script = KWinScript::new( Connection::session().await? );
-    if kwin_script.is_loaded().await?
+    let mut kwin_script = KWinScript::new( Connection::session()? );
+    if kwin_script.is_loaded()?
     {
       debug!( "KWin script is already loaded, unloading" );
-      kwin_script.unload().await?;
+      kwin_script.unload()?;
     }
     if env::var( "WAYLAND_DISPLAY" ).is_err() && env::var_os( "XDG_SESSION_TYPE" ).unwrap_or( "".into() ) == "x11"
     {
       return Err( anyhow!( "X11 should be tried instead" ) );
     }
 
-    kwin_script.load().await.unwrap();
+    kwin_script.load().unwrap();
 
     let active_window = ActiveWindow
     {
@@ -276,34 +270,27 @@ impl KdeWindowManager
 
     let ( tx, rx ) = channel();
     thread::spawn( move || {
-      async fn get_connection( active_window_interface : ActiveWindowInterface ) -> zbus::Result< Connection >
+       fn get_connection( active_window_interface : ActiveWindowInterface ) -> zbus::Result< Connection >
       {
         ConnectionBuilder::session()?
           .name( "systems.obox.window_data_collection" )?
           .serve_at( "/systems/obox/window_data_collection", active_window_interface )?
           .build()
-          .await
+          
       }
 
-      tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-        .block_on( async move {
-          match get_connection( active_window_interface ).await
+          match get_connection( active_window_interface )
           {
             Ok( connection ) =>
             {
               tx.send( None ).unwrap();
               loop
               {
-                connection.monitor_activity().await;
+                connection.monitor_activity();
               }
             }
             Err( e ) => tx.send( Some( e ) ),
           }
-        } )
-        .unwrap();
     } );
     if let Some( error ) = rx.recv().unwrap()
     {
@@ -321,18 +308,17 @@ impl KdeWindowManager
   }
 }
 
-#[ async_trait ]
 impl ActiveWindowManager for KdeWindowManager
 {
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
   {
-    let data = self.active_window.lock().await;
+    let data = self.active_window.lock().unwrap();
     Ok( 
       ActiveWindowData
       {
         window_title : data.caption.clone().into(),
         process_name : None,
-        app_id : None,
+        app_id : Some(data.resource_name.clone().into()),
       } 
     )
   }

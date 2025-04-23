@@ -1,5 +1,4 @@
 use anyhow::{ anyhow, Result };
-use async_trait::async_trait;
 use objc2::{ rc::Retained, runtime::AnyObject, AnyThread };
 use objc2_foundation::{ ns_string, NSAppleScript, NSDictionary, NSString };
 
@@ -39,10 +38,9 @@ impl MacosManger
   pub fn new() -> Self { Default::default() }
 }
 
-#[ async_trait ]
 impl ActiveWindowManager for MacosManger
 {
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
   {
     let script = NSAppleScript::alloc();
     let script = unsafe { NSAppleScript::initWithSource( script, ns_string!( SOURCE ) ) }

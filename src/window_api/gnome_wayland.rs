@@ -1,8 +1,7 @@
 use anyhow::{ anyhow, Context, Result };
-use async_trait::async_trait;
 use serde::Deserialize;
 use tracing::{ debug, trace };
-use zbus::Connection;
+use zbus::blocking::Connection;
 
 use super::{ ActiveWindowData, ActiveWindowManager };
 
@@ -44,7 +43,7 @@ impl< T > From< EmptyOptional< T > > for Option< T >
 
 impl GnomeWindowManager
 {
-  async fn get_window_data( &self ) -> anyhow::Result< Option< GnomeWindowData > >
+  fn get_window_data( &self ) -> anyhow::Result< Option< GnomeWindowData > >
   {
     let call_response = self
       .dbus_connection
@@ -55,8 +54,7 @@ impl GnomeWindowManager
         Some( "org.gnome.shell.extensions.FocusedWindow" ),
         "Get",
         &(),
-      )
-      .await;
+      );
 
     match call_response
     {
@@ -85,27 +83,26 @@ impl GnomeWindowManager
 
 impl GnomeWindowManager
 {
-  pub async fn new() -> anyhow::Result< Self >
+  pub fn new() -> anyhow::Result< Self >
   {
     let watcher = Self 
     {
-      dbus_connection : Connection::session().await?,
+      dbus_connection : Connection::session()?,
       last_app_id : String::new(),
       last_title : String::new(),
       last_pid : 0,
     };
-    watcher.get_window_data().await?;
+    watcher.get_window_data()?;
 
     Ok( watcher )
   }
 }
 
-#[ async_trait ]
 impl ActiveWindowManager for GnomeWindowManager
 {
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
   {
-    let data = self.get_window_data().await;
+    let data = self.get_window_data();
     if let Err( e ) = data
     {
       if e.to_string().contains( "Object does not exist at path" )

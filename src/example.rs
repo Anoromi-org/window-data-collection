@@ -2,26 +2,24 @@
 
 pub mod utils;
 
-use std::time::Duration;
+use std::{thread::sleep, time::Duration};
 
 use anyhow::Result;
 use tracing::{ error, info, level_filters::LevelFilter };
-use window_data_collection::window_api::{ ActiveWindowManager, GenericActiveWindowManager };
+use window_data_collecting::window_api::{ ActiveWindowManager, GenericActiveWindowManager };
 use utils::logging::enable_logging;
 
 
-#[ tokio::main ]
-async fn main() -> Result< () >
+fn main() -> Result< () >
 {
   enable_logging( "example", "logs".as_ref(), Some( LevelFilter::TRACE ), true )?;
   let mut manager = GenericActiveWindowManager::new()
-  .await
   .inspect_err( | e | error!( "Failed to create window manager {e:?}" ) )?;
 
   info!( "Created manager" );
   loop
   {
-    info!( "Window data {:?}", manager.get_active_window_data().await );
-    tokio::time::sleep( Duration::from_secs( 1 ) ).await;
+    info!( "Window data {:?}", manager.get_active_window_data() );
+    sleep( Duration::from_secs( 1 ) );
   }
 }

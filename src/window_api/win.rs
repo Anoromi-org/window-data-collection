@@ -1,5 +1,4 @@
 use anyhow::{ Result, anyhow };
-use async_trait::async_trait;
 use tracing::error;
 use windows::
 {
@@ -22,7 +21,7 @@ use windows::
   core::PWSTR,
 };
 
-use super::{ ActiveWindowData, WindowManager };
+use super::{ ActiveWindowData, ActiveWindowManager, WindowManager };
 
 #[ tracing::instrument ]
 pub fn get_active() -> Result< ActiveWindowData >
@@ -140,15 +139,17 @@ impl Default for WindowsWindowManager
   fn default() -> Self { Self::new() }
 }
 
-#[ async_trait ]
-impl WindowManager for WindowsWindowManager
+impl ActiveWindowManager for WindowsWindowManager 
 {
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
   {
     get_active().inspect_err( | e | error!( "Failed to get active window {e:?}" ) )
   }
+}
 
-  async fn get_idle_time( &mut self ) -> Result< u32 >
+impl WindowManager for WindowsWindowManager
+{
+  fn get_idle_time( &mut self ) -> Result< u32 >
   {
     get_idle_time().inspect_err( | e | error!( "Failed to get idle time {e:?}" ) )
   }

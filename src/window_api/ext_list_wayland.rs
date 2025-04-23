@@ -4,7 +4,6 @@ use wayland_protocols::ext::foreign_toplevel_list::v1::client::
   ext_foreign_toplevel_handle_v1::{ ExtForeignToplevelHandleV1, Event as HandleEvent },
 };
 use anyhow::{ anyhow, Result };
-use async_trait::async_trait;
 use std::collections::HashMap;
 use tracing::{ debug, error, trace, warn };
 use wayland_client::
@@ -185,7 +184,7 @@ pub struct ExtWindowManager
 
 impl ExtWindowManager
 {
-  pub async fn new() -> anyhow::Result< Self >
+  pub fn new() -> anyhow::Result< Self >
   {
     let mut connection : WlEventConnection< ToplevelState > = WlEventConnection::connect()?;
     connection.get_foreign_toplevel_list()?;
@@ -203,10 +202,9 @@ impl ExtWindowManager
   }
 }
 
-#[ async_trait ]
 impl ActiveWindowManager for ExtWindowManager
 {
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
   {
     self
       .connection

@@ -2,6 +2,7 @@ use anyhow::Result;
 use sysinfo::Pid;
 
 
+#[allow(unused)]
 pub(crate) fn get_process_name( id : u32 ) -> Result< Option< String > >
 {
   let system = sysinfo::System::new_all();

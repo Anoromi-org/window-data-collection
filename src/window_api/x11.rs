@@ -2,7 +2,6 @@
 //! with the server.
 
 use anyhow::{ anyhow, Result };
-use async_trait::async_trait;
 use tracing::{ error, instrument };
 use xcb::
 {
@@ -188,11 +187,10 @@ impl X11WindowManager
   }
 }
 
-#[ async_trait ]
 impl ActiveWindowManager for X11WindowManager
 {
   #[ instrument( skip( self ) ) ]
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >
   {
     let data = self
       .try_get_data()
@@ -203,11 +201,10 @@ impl ActiveWindowManager for X11WindowManager
   }
 }
 
-#[ async_trait ]
 impl WindowManager for X11WindowManager
 {
   #[ instrument( skip( self ) ) ]
-  async fn get_idle_time( &mut self ) -> Result< u32 >
+  fn get_idle_time( &mut self ) -> Result< u32 >
   {
     let data = self
     .try_get_data()

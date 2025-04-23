@@ -29,10 +29,8 @@ extern crate xcb;
 use std::sync::Arc;
 
 use anyhow::{ anyhow, Result };
-use async_trait::async_trait;
-use serde::{ Deserialize, Serialize };
 
-#[derive( Debug, Clone, Serialize, Deserialize, )]
+#[derive( Debug, Clone )]
 pub struct ActiveWindowData
 {
   /// Name of the window. For example, 'bash in hello' or 'Document 1' or '*Video* in YouTube - Chrome'
@@ -44,18 +42,16 @@ pub struct ActiveWindowData
 }
 
 /// Intended to serve as a contract windows and linux systems must implement.
-#[ async_trait ]
 pub trait WindowManager : ActiveWindowManager
 {
   /// Retrieve amount of time user has been inactive in milliseconds
-  async fn get_idle_time( &mut self ) -> Result< u32 >;
+  fn get_idle_time( &mut self ) -> Result< u32 >;
 }
 
 #[ cfg_attr( test, mockall::automock ) ]
-#[ async_trait ]
 pub trait ActiveWindowManager
 {
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >;
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >;
 }
 
 #[ cfg( test ) ]
@@ -63,16 +59,14 @@ mockall::mock! {
     // Structure to mock
   MockWindowManager {}
   // First trait to implement on C
-  #[async_trait]
   impl ActiveWindowManager for MockWindowManager 
   {
-      async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >;
+      fn get_active_window_data( &mut self ) -> Result< ActiveWindowData >;
   }
   // Second trait to implement on C
-  #[async_trait]
   impl WindowManager for MockWindowManager 
   {
-      async fn get_idle_time( &mut self ) -> Result< u32 >;
+      fn get_idle_time( &mut self ) -> Result< u32 >;
   }
 }
 
@@ -99,7 +93,7 @@ pub struct GenericActiveWindowManager
 impl GenericActiveWindowManager
 {
   #[ allow( unreachable_code ) ]
-  pub async fn new() -> Result< Self >
+  pub fn new() -> Result< Self >
   {
     #[ cfg( feature = "win" ) ]
     {
@@ -122,20 +116,20 @@ impl GenericActiveWindowManager
     #[ cfg( feature = "kde_wlnd" ) ]
     {
       use kde_wayland::KdeWindowManager;
-      let _ = try_create_manager!( KdeWindowManager::new().await )
+      let _ = try_create_manager!( KdeWindowManager::new() )
       .inspect_err( | e | tracing::error!( "Failed creating KDE window manager {e:?}" ) );
     }
     #[ cfg( feature = "gnome_wlnd" ) ]
     {
       use gnome_wayland::GnomeWindowManager;
-      let _ = try_create_manager!( GnomeWindowManager::new().await )
+      let _ = try_create_manager!( GnomeWindowManager::new() )
       .inspect_err( | e | tracing::error!( "Failed creating Gnome window manager {e:?}" ) );
     }
     #[ cfg( feature = "wlr_wlnd" ) ]
     {
       use wlr_management_wayland::WlrWindowManager;
 
-      let _ = try_create_manager!( WlrWindowManager::new().await )
+      let _ = try_create_manager!( WlrWindowManager::new() )
       .inspect_err( | e | tracing::error!( "Failed creating Wlr window manager {e:?}" ) );
     }
 
@@ -144,8 +138,7 @@ impl GenericActiveWindowManager
   }
 }
 
-#[ async_trait ]
 impl ActiveWindowManager for GenericActiveWindowManager
 {
-  async fn get_active_window_data( &mut self ) -> Result< ActiveWindowData > { self.inner.get_active_window_data().await }
+  fn get_active_window_data( &mut self ) -> Result< ActiveWindowData > { self.inner.get_active_window_data() }
 }
